@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        
+        <style type="text/css">
+            
+            * { margin:0; padding:0; }
+            html, body { width:100%; height:100%; }
+            
+            #dbltap-area { width:100%; height:100%; background:#eee; overflow:hidden; }
+            
+        </style>
+        
+        <script type="text/javascript" src="jquery-2.1.1.min.js"></script>
+        <script type="text/javascript">
+            
+            // Handler for when a double-tap (on a touchscreen) or double-click (with a mouse) is detected
+            var dblTapHandler = function (x, y) {
+
+                // Do stuff...
+                var circleElem = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circleElem.setAttribute('cx', x);
+                circleElem.setAttribute('cy', y);
+                circleElem.setAttribute('r', 8);
+                circleElem.setAttribute('stroke', '#aaa');
+                circleElem.setAttribute('stroke-width', 1);
+                circleElem.setAttribute('fill', '#000');
+                document.getElementsByTagName('svg')[0].appendChild(circleElem);                
+            }
+            
+            $(document).ready(function() {
+        
+
+                // Listen for double-click events for desktop/mouse-based interactions
+                $('.ia-dbltap-area').on('dblclick', function (e) {          
+                    // Call handler          
+                    dblTapHandler(e.pageX, e.pageY);                    
+                });
+        
+
+                // Listen for touchend events for touch-based interactions
+                $('.ia-dbltap-area').on('touchend', function(e) {       
+
+                    var dblTapRadius = 24; // radius (in pixels) of the area in which we expect the 2 taps for a double-tap
+                    var dblTapSpeed = 300; // interval (in milliseconds) in which we expect the 2 taps for a double-tap
+
+                    if(e.originalEvent.changedTouches.length <= 0) {
+                        return false; // we have nothing to work with
+                    }                    
+
+                    var dblTapDetected = false;  // flag specifying if we detected a double-tap
+                    var areaElem = $(this); // element in which this touchend event has occured
+                    
+                    // Position of the touch
+                    var x = e.originalEvent.changedTouches[0].pageX;
+                    var y = e.originalEvent.changedTouches[0].pageY;
+
+                    var now = new Date().getTime();
+        
+                    // Check if we have stored data for a previous touch (indicating we should test for a double-tap)
+                    if(areaElem.data('last-touch-time')) {
+
+                        lastTouchTime = areaElem.data('last-touch-time');
+
+                        // Compute time since the previous touch
+                        var timeSinceLastTouch = now - lastTouchTime;  
+                        
+                        // Get the position of the last touch on the element
+                        var lastX = areaElem.data('last-touch-x');
+                        var lastY = areaElem.data('last-touch-y');    
+                        
+                        // Compute the distance from the last touch on the element
+                        var distFromLastTouch = Math.sqrt( Math.pow(x-lastX,2) + Math.pow(y-lastY,2) );
+
+                        // Check if:
+                        //      1. If the time since the last touch is within the specified double-tap interval (dblTapSpeed)
+                        //      2. The distance from the last touch is within the specified double-tap radius (tapRadius)
+                        if(timeSinceLastTouch <= dblTapSpeed && distFromLastTouch <= dblTapRadius) {
+
+                            // Flag that we detected a double tap
+                            dblTapDetected = true;
+                            
+                            // Call handler
+                            dblTapHandler(x, y);
+
+                            // Remove last touch info from element
+                            areaElem.data('last-touch-time', '');
+                            areaElem.data('last-touch-x', '');     
+                            areaElem.data('last-touch-y', '');   
+                        }
+                        
+                    }
+
+
+                    if(!dblTapDetected) { // A double-tap wasn't detected
+
+                        // Store time and position of this touch on the element
+                        // (Next touch may be a double-tap, we can use this info to determine if it is)
+                        areaElem.data('last-touch-time', now);                    
+                        areaElem.data('last-touch-x', x);     
+                        areaElem.data('last-touch-y', y);     
+                    }
+
+                });
+        
+            });
+            
+        </script>
+        
+    </head>
+    
+    
+    <body>
+        
+        <div id="dbltap-area" class="ia-dbltap-area">
+            
+            
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="smallGrid" width="8" height="8" patternUnits="userSpaceOnUse">
+                  <path d="M 8 0 L 0 0 0 8" fill="none" stroke="gray" stroke-width="0.5"/>
+                </pattern>
+                <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+                  <rect width="80" height="80" fill="url(#smallGrid)"/>
+                  <path d="M 80 0 L 0 0 0 80" fill="none" stroke="gray" stroke-width="1"/>
+                </pattern>
+              </defs>
+
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>            
+            
+            
+        </div>
+                
+    </body>
+    
+</html>
